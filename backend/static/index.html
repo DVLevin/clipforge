@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ClipForge — AI Background Remover & Object Eraser</title>
+  <meta name="description" content="Remove backgrounds and erase objects from photos instantly. Free, private, no watermark. Under 2 seconds.">
+  <meta property="og:title" content="ClipForge — AI Background Remover">
+  <meta property="og:description" content="Remove backgrounds and erase objects instantly. Free, private, no watermark.">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='25' fill='%238b5cf6'/><text y='65' x='50' font-size='55' text-anchor='middle'>✂️</text></svg>">
+  <style>
+    :root {
+      --bg: #030305;
+      --surface: rgba(255, 255, 255, 0.03);
+      --surface-2: rgba(255, 255, 255, 0.06);
+      --surface-3: rgba(255, 255, 255, 0.09);
+      --border: rgba(255, 255, 255, 0.08);
+      --border-hover: rgba(255, 255, 255, 0.15);
+      --text: #f5f5f7;
+      --text-dim: #8a8a98;
+      --accent: #8b5cf6;
+      --accent-2: #a855f7;
+      --accent-glow: rgba(139, 92, 246, 0.4);
+      --success: #10b981;
+      --danger: #f43f5e;
+      --radius: 24px;
+      --radius-sm: 16px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', 'Roboto', sans-serif;
+      background:
+        radial-gradient(ellipse at 15% 0%, rgba(139, 92, 246, 0.18) 0%, transparent 50%),
+        radial-gradient(ellipse at 85% 100%, rgba(168, 85, 247, 0.12) 0%, transparent 45%),
+        var(--bg);
+      background-attachment: fixed;
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    body.modal-open { overflow: hidden; }
+
+    .ambient-glow {
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background:
+        radial-gradient(circle at 20% 30%, rgba(139, 92, 246, 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 80% 70%, rgba(236, 72, 153, 0.06) 0%, transparent 40%);
+    }
+
+    /* ---- Header ---- */
+    header {
+      position: relative; z-index: 1;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 20px; max-width: 760px; width: 100%; margin: 0 auto;
+    }
+    .logo { display: flex; align-items: center; gap: 12px; font-size: 22px; font-weight: 800; letter-spacing: -0.5px; color: var(--text); text-decoration: none; }
+    .logo-icon {
+      width: 38px; height: 38px;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+      border-radius: 12px; display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 8px 24px rgba(139, 92, 246, 0.3); font-size: 18px;
+    }
+    .quota-badge {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 100px; padding: 7px 16px; font-size: 13px; color: var(--text-dim);
+      font-weight: 500; backdrop-filter: blur(12px); transition: all 0.3s ease;
+    }
+    .quota-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); box-shadow: 0 0 10px var(--success); transition: all 0.3s ease; }
+    .quota-badge--low .quota-dot { background: #f59e0b; box-shadow: 0 0 10px #f59e0b; }
+    .quota-badge--empty .quota-dot { background: var(--danger); box-shadow: 0 0 10px var(--danger); }
+    .quota-badge strong { color: var(--text); font-weight: 700; }
+
+    /* ---- Main ---- */
+    main {
+      position: relative; z-index: 1; flex: 1;
+      display: flex; flex-direction: column; align-items: center;
+      padding: 40px 20px 60px; max-width: 760px; width: 100%; margin: 0 auto; gap: 32px;
+    }
+
+    /* ---- Hero ---- */
+    .hero { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 100px; padding: 6px 14px; font-size: 12px; font-weight: 600;
+      color: var(--text-dim); letter-spacing: 0.3px; backdrop-filter: blur(12px);
+    }
+    .hero h1 {
+      font-size: clamp(2.2rem, 6.5vw, 3.4rem); font-weight: 800; line-height: 1.1; letter-spacing: -0.04em;
+      background: linear-gradient(180deg, #ffffff 0%, #c4b5fd 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .hero h1 span {
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .hero p { color: var(--text-dim); font-size: 15px; font-weight: 500; }
+
+    /* ---- Tabs ---- */
+    .tabs {
+      display: flex; gap: 6px; background: var(--surface); padding: 5px;
+      border-radius: 16px; border: 1px solid var(--border);
+      backdrop-filter: blur(20px); width: 100%; max-width: 380px;
+    }
+    .tab {
+      flex: 1; padding: 11px 16px; border: none; background: transparent;
+      color: var(--text-dim); font-size: 14px; font-weight: 600; border-radius: 12px;
+      cursor: pointer; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .tab:hover { color: var(--text); background: var(--surface-2); }
+    .tab.active {
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+      color: white; box-shadow: 0 8px 24px rgba(139, 92, 246, 0.35);
+    }
+
+    /* ---- Panels ---- */
+    .panel { width: 100%; display: none; flex-direction: column; gap: 20px; }
+    .panel.active { display: flex; animation: fadeIn 0.4s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ---- Upload Zone ---- */
+    .upload-zone {
+      width: 100%; min-height: 280px; border: 1px dashed var(--border); border-radius: var(--radius);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      cursor: pointer; transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      background: var(--surface); position: relative; overflow: hidden; backdrop-filter: blur(20px);
+    }
+    .upload-zone::before {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(139, 92, 246, 0.08) 0%, transparent 50%);
+      opacity: 0; transition: opacity 0.35s ease;
+    }
+    .upload-zone:hover {
+      border-color: var(--accent); background: var(--surface-2); transform: translateY(-2px);
+      box-shadow: 0 20px 50px rgba(139, 92, 246, 0.12);
+    }
+    .upload-zone:hover::before { opacity: 1; }
+    .upload-zone.dragover {
+      border-color: var(--accent); background: rgba(139, 92, 246, 0.08);
+      transform: scale(1.01); box-shadow: 0 0 60px rgba(139, 92, 246, 0.2);
+    }
+    .upload-zone-content {
+      position: relative; z-index: 1; display: flex; flex-direction: column;
+      align-items: center; gap: 12px; padding: 32px; text-align: center;
+    }
+    .upload-icon {
+      width: 72px; height: 72px; border-radius: 22px; background: var(--surface-2);
+      border: 1px solid var(--border); display: flex; align-items: center; justify-content: center;
+      margin-bottom: 4px; transition: all 0.35s ease;
+    }
+    .upload-icon svg { width: 30px; height: 30px; color: var(--accent); transition: transform 0.35s ease; }
+    .upload-zone:hover .upload-icon {
+      background: var(--surface-3); border-color: var(--border-hover);
+      box-shadow: 0 12px 30px rgba(139, 92, 246, 0.15);
+    }
+    .upload-zone:hover .upload-icon svg { transform: translateY(-2px); }
+    .upload-title { color: var(--text); font-size: 17px; font-weight: 700; }
+    .upload-subtitle { color: var(--text-dim); font-size: 14px; font-weight: 500; }
+    .upload-formats { display: flex; align-items: center; gap: 8px; margin-top: 4px; font-size: 11px; color: var(--text-dim); font-weight: 600; letter-spacing: 0.5px; }
+    .upload-formats span:not(:last-child) { background: var(--surface-2); border: 1px solid var(--border); padding: 3px 8px; border-radius: 6px; }
+    .upload-zone input[type="file"] { display: none; }
+
+    /* ---- Processing ---- */
+    .processing {
+      display: none; flex-direction: column; align-items: center; gap: 16px; padding: 60px 40px;
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); backdrop-filter: blur(20px);
+    }
+    .spinner {
+      width: 52px; height: 52px; border: 3px solid var(--surface-2);
+      border-top-color: var(--accent); border-radius: 50%; animation: spin 0.9s linear infinite;
+      position: relative;
+    }
+    .spinner::after {
+      content: ''; position: absolute; inset: -4px; border-radius: 50%;
+      border: 1px solid transparent; border-top-color: rgba(139, 92, 246, 0.3);
+      animation: spin 1.5s linear infinite reverse;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .processing p { color: var(--text); font-size: 16px; font-weight: 600; }
+    .processing-hint { color: var(--text-dim) !important; font-size: 13px !important; font-weight: 500 !important; }
+
+    /* ---- Results ---- */
+    .results { display: none; width: 100%; flex-direction: column; gap: 20px; animation: fadeIn 0.5s ease; }
+
+    /* Comparison Slider */
+    .comparison-slider {
+      position: relative; width: 100%; border-radius: var(--radius); overflow: hidden;
+      background:
+        linear-gradient(45deg, #1a1a2e 25%, transparent 25%),
+        linear-gradient(-45deg, #1a1a2e 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #1a1a2e 75%),
+        linear-gradient(-45deg, transparent 75%, #1a1a2e 75%);
+      background-size: 24px 24px;
+      background-position: 0 0, 0 12px, 12px -12px, -12px 0px;
+      background-color: #151520;
+      cursor: col-resize; box-shadow: 0 25px 60px rgba(0, 0, 0, 0.35);
+      border: 1px solid var(--border); aspect-ratio: 4 / 3;
+    }
+    .comparison-image { position: absolute; inset: 0; width: 100%; height: 100%; user-select: none; pointer-events: none; }
+    .comparison-image img { width: 100%; height: 100%; object-fit: contain; display: block; }
+    .comparison-after { z-index: 1; }
+    .comparison-before { z-index: 2; clip-path: inset(0 calc(100% - var(--pos, 50%)) 0 0); border-right: 2px solid var(--accent); }
+    .comparison-handle {
+      position: absolute; top: 0; bottom: 0; left: var(--pos, 50%); width: 44px;
+      transform: translateX(-50%); z-index: 3; display: flex; align-items: center;
+      justify-content: center; pointer-events: none;
+    }
+    .comparison-handle-line { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--accent); box-shadow: 0 0 20px var(--accent-glow); }
+    .comparison-handle-button {
+      position: relative; width: 44px; height: 44px;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 30px rgba(139, 92, 246, 0.5); pointer-events: auto; cursor: col-resize;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .comparison-handle-button:hover { transform: scale(1.08); box-shadow: 0 0 40px rgba(139, 92, 246, 0.7); }
+    .comparison-handle-button svg { width: 18px; height: 18px; color: white; }
+    .comparison-labels { position: absolute; top: 16px; left: 16px; right: 16px; display: flex; justify-content: space-between; pointer-events: none; z-index: 4; }
+    .comparison-label {
+      background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 5px 12px; border-radius: 100px; font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.5px; color: var(--text);
+    }
+
+    /* ---- Actions ---- */
+    .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 14px 24px; border: none; border-radius: var(--radius-sm); font-size: 15px;
+      font-weight: 700; cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      text-align: center; text-decoration: none; white-space: nowrap;
+    }
+    .btn svg { width: 18px; height: 18px; }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%); color: white;
+      box-shadow: 0 8px 24px rgba(139, 92, 246, 0.3);
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(139, 92, 246, 0.45); }
+    .btn-secondary { background: var(--surface-2); color: var(--text); border: 1px solid var(--border); }
+    .btn-secondary:hover { background: var(--surface-3); border-color: var(--border-hover); transform: translateY(-2px); }
+
+    /* ---- Object Eraser ---- */
+    .eraser-wrapper { display: none; width: 100%; flex-direction: column; gap: 14px; animation: fadeIn 0.4s ease; }
+    .canvas-container {
+      position: relative; border-radius: var(--radius); overflow: hidden;
+      border: 1px solid var(--border); background: var(--surface); box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+    }
+    .canvas-container canvas { display: block; width: 100%; cursor: crosshair; touch-action: none; }
+    .brush-controls {
+      display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm);
+      padding: 12px 16px; backdrop-filter: blur(20px);
+    }
+    .brush-control-group { display: flex; align-items: center; gap: 12px; font-size: 13px; color: var(--text-dim); font-weight: 600; flex: 1; min-width: 180px; }
+    .brush-control-group input[type="range"] {
+      flex: 1; max-width: 180px; accent-color: var(--accent); height: 4px;
+      background: var(--surface-2); border-radius: 100px; outline: none; -webkit-appearance: none;
+    }
+    .brush-control-group input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2)); cursor: pointer;
+      box-shadow: 0 0 12px rgba(139, 92, 246, 0.5);
+    }
+    .brush-actions { display: flex; gap: 10px; }
+    .brush-actions .btn { padding: 10px 18px; font-size: 13px; }
+    .eraser-hint { color: var(--text-dim); font-size: 13px; font-weight: 500; text-align: center; }
+
+    /* ---- Paywall Modal ---- */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0, 0, 0, 0.72); backdrop-filter: blur(16px);
+      z-index: 1000; display: none; animation: modalIn 0.35s ease;
+    }
+    @keyframes modalIn { from { opacity: 0; } to { opacity: 1; } }
+    .modal-card {
+      position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.96);
+      width: calc(100% - 32px); max-width: 440px;
+      background: linear-gradient(180deg, rgba(20, 20, 30, 0.95) 0%, rgba(10, 10, 15, 0.95) 100%);
+      border: 1px solid var(--border); border-radius: 32px; padding: 44px 36px;
+      box-shadow: 0 30px 90px rgba(0, 0, 0, 0.55); text-align: center; z-index: 1001;
+      display: none; animation: modalIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .modal-card.show { display: block; }
+    .modal-overlay.show { display: block; }
+    .modal-close {
+      position: absolute; top: 16px; right: 16px; width: 36px; height: 36px;
+      border-radius: 50%; background: var(--surface-2); border: 1px solid var(--border);
+      color: var(--text-dim); font-size: 22px; line-height: 1; cursor: pointer;
+      transition: all 0.2s ease; display: flex; align-items: center; justify-content: center;
+    }
+    .modal-close:hover { background: var(--surface-3); color: var(--text); transform: rotate(90deg); }
+    .modal-icon {
+      width: 64px; height: 64px; border-radius: 22px;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+      display: flex; align-items: center; justify-content: center; font-size: 28px;
+      margin: 0 auto 20px; box-shadow: 0 16px 40px rgba(139, 92, 246, 0.3);
+    }
+    .modal-card h3 { font-size: 26px; font-weight: 800; margin-bottom: 10px; letter-spacing: -0.02em; }
+    .modal-card > p { color: var(--text-dim); font-size: 15px; font-weight: 500; margin-bottom: 24px; }
+    .price { font-size: 42px; font-weight: 800; color: var(--text); margin-bottom: 8px; letter-spacing: -0.02em; }
+    .price span { font-size: 15px; color: var(--text-dim); font-weight: 600; }
+    .feature-list {
+      list-style: none; display: flex; flex-direction: column; gap: 10px; margin: 24px 0;
+      text-align: left; background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 20px;
+    }
+    .feature-list li { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--text); font-weight: 500; }
+    .feature-list li::before {
+      content: ""; width: 18px; height: 18px; min-width: 18px; background: var(--success);
+      border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23030505' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'%3E%3C/polyline%3E%3C/svg%3E");
+      background-size: 12px; background-position: center; background-repeat: no-repeat;
+    }
+
+    /* ---- Footer ---- */
+    footer { position: relative; z-index: 1; text-align: center; padding: 24px 20px; color: var(--text-dim); font-size: 12px; font-weight: 500; }
+
+    /* ---- Toast ---- */
+    .toast {
+      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(120px);
+      background: var(--surface-3); border: 1px solid var(--border-hover);
+      padding: 14px 28px; border-radius: 100px; font-size: 14px; font-weight: 600;
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 2000;
+      max-width: 90%; backdrop-filter: blur(20px); box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    .toast.error { border-color: var(--danger); color: var(--danger); }
+    .toast.success { border-color: var(--success); color: var(--success); }
+
+    @media (max-width: 600px) {
+      .hero h1 { font-size: 28px; }
+      .actions { grid-template-columns: 1fr; }
+      .brush-controls { flex-direction: column; align-items: stretch; }
+      .brush-control-group { min-width: unset; }
+      .modal-card { padding: 32px 24px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="ambient-glow"></div>
+
+  <header>
+    <a href="/" class="logo">
+      <div class="logo-icon">✂️</div>
+      ClipForge
+    </a>
+    <div class="quota-badge" id="quotaBadge">
+      <span class="quota-dot"></span>
+      <strong id="quotaRemaining">5</strong> free left
+    </div>
+  </header>
+
+  <main>
+    <div class="hero">
+      <div class="hero-badge">⚡ AI-powered • No signup required</div>
+      <h1>Remove Backgrounds <span>Instantly</span></h1>
+      <p>Free • Private • No watermark • Under 2 seconds</p>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" data-tab="bg-remove">🖼️ Remove BG</button>
+      <button class="tab" data-tab="erase">🎯 Erase Object</button>
+    </div>
+
+    <!-- Remove BG Panel -->
+    <div id="bg-remove-section" class="panel active" style="display: flex; flex-direction: column; gap: 20px;">
+      <div class="upload-zone" id="uploadZone">
+        <div class="upload-zone-content">
+          <div class="upload-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+          </div>
+          <p class="upload-title">Drop an image or click to upload</p>
+          <p class="upload-subtitle">We'll remove the background instantly</p>
+          <div class="upload-formats">
+            <span>JPG</span><span>PNG</span><span>WEBP</span> up to 15MB
+          </div>
+        </div>
+        <input type="file" id="fileInput" accept="image/*">
+      </div>
+
+      <div class="processing" id="processing">
+        <div class="spinner"></div>
+        <p id="processingText">Removing background...</p>
+        <p class="processing-hint">This usually takes 1-2 seconds</p>
+      </div>
+
+      <div class="results" id="results">
+        <div class="comparison-slider" id="comparisonSlider">
+          <div class="comparison-image comparison-after">
+            <img id="resultImg" src="" alt="Background removed">
+          </div>
+          <div class="comparison-image comparison-before" id="comparisonBefore">
+            <img id="originalImg" src="" alt="Original">
+          </div>
+          <div class="comparison-labels">
+            <span class="comparison-label">Before</span>
+            <span class="comparison-label">After</span>
+          </div>
+          <div class="comparison-handle" id="comparisonHandle">
+            <div class="comparison-handle-line"></div>
+            <div class="comparison-handle-button">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="15 18 9 12 15 6"/>
+                <polyline points="9 18 3 12 9 6" opacity="0.5"/>
+                <polyline points="21 18 15 12 21 6" opacity="0.5"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div class="actions">
+          <a href="" id="downloadLink" class="btn btn-primary" download>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            Download PNG
+          </a>
+          <button class="btn btn-secondary" onclick="resetAll()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="1 4 1 10 7 10"/>
+              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+            </svg>
+            New Image
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Erase Object Panel -->
+    <div id="erase-section" class="panel" style="flex-direction: column; gap: 16px;">
+      <div class="upload-zone" id="uploadZoneErase">
+        <div class="upload-zone-content">
+          <div class="upload-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+              <circle cx="8.5" cy="8.5" r="1.5"/>
+              <polyline points="21 15 16 10 5 21"/>
+            </svg>
+          </div>
+          <p class="upload-title">Upload an image to erase objects</p>
+          <p class="upload-subtitle">Paint over unwanted objects and watch them disappear</p>
+        </div>
+        <input type="file" id="fileInputErase" accept="image/*">
+      </div>
+
+      <div id="eraseCanvasWrapper" class="eraser-wrapper">
+        <div class="canvas-container">
+          <canvas id="eraseCanvas" width="640" height="480"></canvas>
+        </div>
+        <div class="brush-controls">
+          <div class="brush-control-group">
+            <span>Brush:</span>
+            <input type="range" id="brushSize" min="10" max="80" value="30">
+            <span id="brushVal">30px</span>
+          </div>
+          <div class="brush-actions">
+            <button class="btn btn-secondary" style="padding: 8px 16px; flex: none;" onclick="clearMask()">Clear</button>
+            <button class="btn btn-primary" style="padding: 8px 20px; flex: none;" onclick="eraseObjects()">✨ Erase</button>
+          </div>
+        </div>
+        <p class="eraser-hint">Paint over objects you want to remove. They'll be filled in automatically.</p>
+      </div>
+    </div>
+  </main>
+
+  <!-- Paywall Modal -->
+  <div class="modal-overlay" id="modalOverlay"></div>
+  <div class="modal-card" id="paywallModal">
+    <button class="modal-close" id="modalClose">×</button>
+    <div class="modal-icon">🚀</div>
+    <h3>You're on a roll!</h3>
+    <p>You've used all 5 free removals today.</p>
+    <div class="price">$5.99<span>/month</span></div>
+    <ul class="feature-list">
+      <li>Unlimited background removals</li>
+      <li>Unlimited object erasure</li>
+      <li>No watermark, ever</li>
+      <li>Priority processing</li>
+    </ul>
+    <button class="btn btn-primary" style="flex: none; padding: 14px 40px; width: 100%;" id="upgradeBtn">
+      Upgrade to Pro →
+    </button>
+  </div>
+
+  <footer>
+    ClipForge — Your images are processed and never stored. 🔒
+  </footer>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ---- State ----
+    let currentFile = null;
+    let originalImageUrl = null;
+    let resultImageUrl = null;
+    let isDrawing = false;
+    let isDraggingSlider = false;
+    let eraseFile = null;
+    let maskCanvas = null;
+    let maskCtx = null;
+
+    // ---- Elements ----
+    const uploadZone = document.getElementById('uploadZone');
+    const fileInput = document.getElementById('fileInput');
+    const processing = document.getElementById('processing');
+    const results = document.getElementById('results');
+    const originalImg = document.getElementById('originalImg');
+    const resultImg = document.getElementById('resultImg');
+    const downloadLink = document.getElementById('downloadLink');
+    const quotaBadge = document.getElementById('quotaBadge');
+    const quotaRemaining = document.getElementById('quotaRemaining');
+    const modalOverlay = document.getElementById('modalOverlay');
+    const paywallModal = document.getElementById('paywallModal');
+    const comparisonSlider = document.getElementById('comparisonSlider');
+    const comparisonHandle = document.getElementById('comparisonHandle');
+    const comparisonBefore = document.getElementById('comparisonBefore');
+
+    // ---- Tabs ----
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        const target = tab.dataset.tab;
+        document.getElementById('bg-remove-section').style.display = target === 'bg-remove' ? 'flex' : 'none';
+        document.getElementById('erase-section').style.display = target === 'erase' ? 'flex' : 'none';
+      });
+    });
+
+    // ---- Upload: Drag & Drop ----
+    uploadZone.addEventListener('click', () => fileInput.click());
+    uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+    uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+    uploadZone.addEventListener('drop', e => {
+      e.preventDefault(); uploadZone.classList.remove('dragover');
+      if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+    });
+    fileInput.addEventListener('change', e => { if (e.target.files[0]) handleFile(e.target.files[0]); });
+
+    // ---- Handle File Upload ----
+    async function handleFile(file) {
+      if (!file.type.startsWith('image/')) { showToast('Please upload an image file', 'error'); return; }
+      if (file.size > 15 * 1024 * 1024) { showToast('Image too large (max 15MB)', 'error'); return; }
+
+      currentFile = file;
+      uploadZone.style.display = 'none';
+      processing.style.display = 'flex';
+      results.style.display = 'none';
+      originalImageUrl = URL.createObjectURL(file);
+      originalImg.src = originalImageUrl;
+
+      const formData = new FormData();
+      formData.append('image', file);
+
+      try {
+        const response = await fetch('/v1/remove-background', { method: 'POST', body: formData });
+
+        if (response.status === 429) { showPaywall(); processing.style.display = 'none'; uploadZone.style.display = 'flex'; updateQuota(0); return; }
+        if (!response.ok) { const err = await response.json().catch(() => ({})); throw new Error(err.detail || 'Processing failed'); }
+
+        const blob = await response.blob();
+        resultImageUrl = URL.createObjectURL(blob);
+        resultImg.src = resultImageUrl;
+        downloadLink.href = resultImageUrl;
+
+        const remaining = response.headers.get('X-Quota-Remaining');
+        if (remaining !== null) updateQuota(parseInt(remaining));
+
+        processing.style.display = 'none';
+        results.style.display = 'flex';
+        showToast('Background removed! ✨', 'success');
+        initSlider();
+      } catch (err) {
+        processing.style.display = 'none'; uploadZone.style.display = 'flex';
+        showToast(err.message || 'Something went wrong', 'error');
+      }
+    }
+
+    // ---- Comparison Slider ----
+    function initSlider() {
+      const slider = comparisonSlider;
+      const handle = comparisonHandle;
+      let pos = 50;
+
+      slider.style.setProperty('--pos', '50%');
+      comparisonBefore.style.setProperty('--pos', '50%');
+
+      const updatePos = (clientX) => {
+        const rect = slider.getBoundingClientRect();
+        let x = clientX - rect.left;
+        x = Math.max(0, Math.min(x, rect.width));
+        pos = (x / rect.width) * 100;
+        slider.style.setProperty('--pos', pos + '%');
+        comparisonBefore.style.setProperty('--pos', pos + '%');
+      };
+
+      const startDrag = (e) => { isDraggingSlider = true; e.preventDefault(); };
+      const onMove = (e) => { if (isDraggingSlider) { const cx = e.touches ? e.touches[0].clientX : e.clientX; updatePos(cx); } };
+      const stopDrag = () => { isDraggingSlider = false; };
+
+      handle.addEventListener('mousedown', startDrag);
+      handle.addEventListener('touchstart', startDrag, { passive: false });
+      window.addEventListener('mousemove', onMove);
+      window.addEventListener('touchmove', onMove, { passive: false });
+      window.addEventListener('mouseup', stopDrag);
+      window.addEventListener('touchend', stopDrag);
+
+      // Click anywhere on slider to jump
+      slider.addEventListener('click', (e) => {
+        if (e.target.closest('.comparison-handle-button')) return;
+        updatePos(e.clientX);
+      });
+    }
+
+    // ---- Quota ----
+    function updateQuota(remaining) {
+      quotaRemaining.textContent = remaining;
+      quotaBadge.classList.remove('quota-badge--low', 'quota-badge--empty');
+      if (remaining <= 0) quotaBadge.classList.add('quota-badge--empty');
+      else if (remaining <= 1) quotaBadge.classList.add('quota-badge--low');
+    }
+
+    async function fetchQuota() {
+      try { const res = await fetch('/v1/usage'); if (res.ok) { const d = await res.json(); updateQuota(d.remaining); } } catch {}
+    }
+
+    // ---- Reset ----
+    function resetAll() {
+      currentFile = null;
+      if (originalImageUrl) URL.revokeObjectURL(originalImageUrl);
+      if (resultImageUrl) URL.revokeObjectURL(resultImageUrl);
+      uploadZone.style.display = 'flex'; processing.style.display = 'none'; results.style.display = 'none';
+      fileInput.value = ''; fetchQuota();
+    }
+
+    // ---- Erase Object (Canvas) ----
+    const uploadZoneErase = document.getElementById('uploadZoneErase');
+    const fileInputErase = document.getElementById('fileInputErase');
+    const eraseCanvas = document.getElementById('eraseCanvas');
+    const eraseCtx = eraseCanvas.getContext('2d');
+    const eraseCanvasWrapper = document.getElementById('eraseCanvasWrapper');
+    const brushSize = document.getElementById('brushSize');
+    const brushVal = document.getElementById('brushVal');
+
+    uploadZoneErase.addEventListener('click', () => fileInputErase.click());
+    fileInputErase.addEventListener('change', e => { if (e.target.files[0]) handleEraseFile(e.target.files[0]); });
+    brushSize.addEventListener('input', e => { brushVal.textContent = e.target.value + 'px'; });
+
+    function handleEraseFile(file) {
+      eraseFile = file;
+      uploadZoneErase.style.display = 'none';
+      eraseCanvasWrapper.style.display = 'flex';
+      const img = new Image();
+      img.onload = () => {
+        const maxW = 640;
+        const scale = Math.min(1, maxW / img.width);
+        eraseCanvas.width = img.width * scale;
+        eraseCanvas.height = img.height * scale;
+        eraseCtx.drawImage(img, 0, 0, eraseCanvas.width, eraseCanvas.height);
+        maskCanvas = document.createElement('canvas');
+        maskCanvas.width = eraseCanvas.width;
+        maskCanvas.height = eraseCanvas.height;
+        maskCtx = maskCanvas.getContext('2d');
+        maskCtx.fillStyle = 'black';
+        maskCtx.fillRect(0, 0, maskCanvas.width, maskCanvas.height);
+      };
+      img.src = URL.createObjectURL(file);
+    }
+
+    function getCanvasPos(e) {
+      const rect = eraseCanvas.getBoundingClientRect();
+      const scaleX = eraseCanvas.width / rect.width;
+      const scaleY = eraseCanvas.height / rect.height;
+      return { x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY };
+    }
+
+    function startDraw(e) { isDrawing = true; draw(e); }
+    function draw(e) {
+      if (!isDrawing) return;
+      const pos = getCanvasPos(e);
+      const size = parseInt(brushSize.value);
+      eraseCtx.globalCompositeOperation = 'source-over';
+      eraseCtx.fillStyle = 'rgba(139, 92, 246, 0.5)';
+      eraseCtx.beginPath(); eraseCtx.arc(pos.x, pos.y, size / 2, 0, Math.PI * 2); eraseCtx.fill();
+      maskCtx.globalCompositeOperation = 'source-over';
+      maskCtx.fillStyle = 'white';
+      maskCtx.beginPath(); maskCtx.arc(pos.x, pos.y, size / 2, 0, Math.PI * 2); maskCtx.fill();
+    }
+    function stopDraw() { isDrawing = false; }
+
+    eraseCanvas.addEventListener('mousedown', startDraw);
+    eraseCanvas.addEventListener('mousemove', draw);
+    eraseCanvas.addEventListener('mouseup', stopDraw);
+    eraseCanvas.addEventListener('mouseleave', stopDraw);
+    eraseCanvas.addEventListener('touchstart', e => { e.preventDefault(); startDraw(e.touches[0]); }, { passive: false });
+    eraseCanvas.addEventListener('touchmove', e => { e.preventDefault(); draw(e.touches[0]); }, { passive: false });
+    eraseCanvas.addEventListener('touchend', stopDraw);
+
+    function clearMask() { if (eraseFile) handleEraseFile(eraseFile); }
+
+    async function eraseObjects() {
+      if (!eraseFile || !maskCanvas) { showToast('Upload an image first', 'error'); return; }
+      const maskData = maskCtx.getImageData(0, 0, maskCanvas.width, maskCanvas.height);
+      const hasSelection = maskData.data.some((v, i) => i % 4 === 0 && v > 128);
+      if (!hasSelection) { showToast('Paint over the objects you want to erase first', 'error'); return; }
+
+      const maskBlob = await new Promise(resolve => maskCanvas.toBlob(resolve, 'image/png'));
+      const formData = new FormData();
+      formData.append('image', eraseFile);
+      formData.append('mask', maskBlob, 'mask.png');
+
+      showToast('Erasing objects... ⏳');
+      try {
+        const response = await fetch('/v1/erase-objects', { method: 'POST', body: formData });
+        if (response.status === 429) { showPaywall(); return; }
+        if (!response.ok) throw new Error('Erase failed');
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const img = new Image();
+        img.onload = () => {
+          eraseCtx.clearRect(0, 0, eraseCanvas.width, eraseCanvas.height);
+          eraseCanvas.width = img.width; eraseCanvas.height = img.height;
+          eraseCtx.drawImage(img, 0, 0);
+          maskCtx.fillStyle = 'black';
+          maskCtx.fillRect(0, 0, maskCanvas.width, maskCanvas.height);
+          const dl = document.createElement('a'); dl.href = url; dl.download = 'clipforge_erased.png'; dl.click();
+          showToast('Objects erased! ✨', 'success');
+        };
+        img.src = url;
+        const remaining = response.headers.get('X-Quota-Remaining');
+        if (remaining !== null) updateQuota(parseInt(remaining));
+      } catch (err) { showToast(err.message || 'Erase failed', 'error'); }
+    }
+
+    // ---- Paywall Modal ----
+    function showPaywall() { paywallModal.classList.add('show'); modalOverlay.classList.add('show'); document.body.classList.add('modal-open'); }
+    function hidePaywall() { paywallModal.classList.remove('show'); modalOverlay.classList.remove('show'); document.body.classList.remove('modal-open'); }
+    document.getElementById('modalClose').addEventListener('click', hidePaywall);
+    modalOverlay.addEventListener('click', hidePaywall);
+    document.getElementById('upgradeBtn').addEventListener('click', () => {
+      showToast('Payment coming soon — come back tomorrow for 5 more free!'); hidePaywall();
+    });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') hidePaywall(); });
+
+    // ---- Toast ----
+    function showToast(msg, type = '') {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.className = 'toast show ' + type;
+      setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    // ---- Init ----
+    fetchQuota();
+  </script>
+</body>
+</html>

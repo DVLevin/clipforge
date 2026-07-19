@@ -1,0 +1,46 @@
+{
+    "codename": "CLIPFORGE",
+    "created": "2026-07-05T03:48:46.089800",
+    "sprints": {
+        "sprint_0": {
+            "status": "completed",
+            "ticket": "FACT-19",
+            "completed_at": "2026-07-05T02:18:49.352010+00:00",
+            "artifact": "00_market_analysis.md"
+        },
+        "sprint_1": {
+            "status": "completed",
+            "ticket": "FACT-20",
+            "brand_locked": "CLIPFORGE",
+            "locked_at": "2026-07-06T02:30:00Z",
+            "locked_by": "Conny (Dima approved)"
+        },
+        "sprint_2": {
+            "status": "waiting_gate",
+            "ticket": "FACT-21"
+        },
+        "sprint_3": {
+            "status": "waiting_gate",
+            "ticket": "FACT-22"
+        },
+        "sprint_4": {
+            "status": "growth_done_awaiting_review",
+            "ticket": "FACT-23",
+            "delivered": "2026-07-05T04:06:00Z",
+            "deliverables": [
+                "launch/reddit-launch-plan.md",
+                "launch/tiktok-reels-content.md",
+                "launch/review-collection-strategy.md",
+                "launch/aso-checklist.md",
+                "launch/README.md",
+                "launch/copywriter/ (3 brief stubs, separate assignment)"
+            ],
+            "note": "Growth track complete. Copywriter track (landing page, reddit drafts, about copy) intentionally left as separate assignment per brief - stubs with full context placed in launch/copywriter/."
+        },
+        "sprint_5": {
+            "status": "waiting_gate",
+            "ticket": "FACT-24"
+        }
+    },
+    "tickets_created": "2026-07-05T03:48:46.268632"
+}

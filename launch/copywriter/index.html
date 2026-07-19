@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>CLIPFORGE — Remove Any Background. Erase Any Object. In One Tap.</title>
+    <meta name="description" content="AI background remover and object eraser that works on your device. No upload, no watermark, no waiting. Free to try.">
+    <meta property="og:title" content="CLIPFORGE — AI Background Remover & Object Eraser">
+    <meta property="og:description" content="Remove backgrounds in one tap. Erase objects with a brush. No watermark. 100% on-device AI.">
+    <meta property="og:type" content="website">
+    <meta name="theme-color" content="#0D0F1C">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Space+Grotesk:wght@600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+    <style>
+        *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+        :root{
+            --teal:#00D9C0;--teal-dark:#00A896;--navy:#0D0F1C;--slate:#1A1D2E;
+            --slate-hover:#252940;--magenta:#FF3D7F;--lime:#7CFF6B;--amber:#FFB84D;
+            --text:#F0F2F5;--text-sec:#8B8FA3;--radius-card:16px;--radius-btn:12px;
+        }
+        html{scroll-behavior:smooth}
+        body{background:var(--navy);color:var(--text);font-family:'Inter',sans-serif;
+             line-height:1.6;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+        h1,h2,h3{font-family:'Space Grotesk',sans-serif;line-height:1.2}
+        .container{max-width:480px;margin:0 auto;padding:0 24px}
+        @media(min-width:768px){.container{max-width:720px}}
+        @media(min-width:1024px){.container{max-width:960px}}
+
+        /* HERO */
+        .hero{text-align:center;padding:80px 0 60px;position:relative}
+        .hero::before{content:'';position:absolute;top:-100px;left:50%;transform:translateX(-50%);
+            width:600px;height:600px;background:radial-gradient(circle,rgba(0,217,192,0.08) 0%,transparent 70%);
+            pointer-events:none;z-index:0}
+        .badge{display:inline-flex;align-items:center;gap:6px;background:var(--slate);
+            border:1px solid rgba(0,217,192,0.2);padding:6px 14px;border-radius:100px;
+            font-size:13px;color:var(--teal);font-weight:600;margin-bottom:24px;position:relative;z-index:1}
+        .badge::before{content:'';width:6px;height:6px;background:var(--teal);border-radius:50%;
+            animation:pulse 2s infinite}
+        @keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(0,217,192,0.4)}
+            50%{opacity:0.7;box-shadow:0 0 0 6px rgba(0,217,192,0)}}
+        .hero h1{font-size:clamp(32px,7vw,56px);font-weight:700;letter-spacing:-0.02em;
+            margin-bottom:20px;position:relative;z-index:1}
+        .hero h1 .accent{color:var(--teal)}
+        .hero p.sub{font-size:clamp(16px,2.5vw,20px);color:var(--text-sec);max-width:480px;
+            margin:0 auto 36px;position:relative;z-index:1}
+        .cta-group{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;position:relative;z-index:1}
+        .btn{display:inline-flex;align-items:center;gap:8px;padding:16px 32px;border-radius:var(--radius-btn);
+            font-family:'Inter',sans-serif;font-weight:600;font-size:16px;text-decoration:none;
+            transition:all 0.2s ease;cursor:pointer;border:none}
+        .btn-primary{background:var(--magenta);color:#fff;box-shadow:0 4px 20px rgba(255,61,127,0.3)}
+        .btn-primary:hover{transform:translateY(-2px);box-shadow:0 6px 28px rgba(255,61,127,0.4)}
+        .btn-secondary{background:var(--slate);color:var(--text);border:1px solid var(--slate-hover)}
+        .btn-secondary:hover{background:var(--slate-hover)}
+
+        /* BEFORE AFTER DEMO */
+        .demo{margin:48px auto;max-width:400px;position:relative;z-index:1}
+        .demo-frame{background:var(--slate);border-radius:var(--radius-card);padding:12px;
+            border:1px solid var(--slate-hover);box-shadow:0 8px 40px rgba(0,217,192,0.1)}
+        .demo-img{position:relative;width:100%;aspect-ratio:1;border-radius:8px;overflow:hidden;
+            background:#1e1e2e;display:flex;align-items:center;justify-content:center}
+        .demo-img .checkered{
+            position:absolute;inset:0;
+            background-image:linear-gradient(45deg,#252940 25%,transparent 25%),
+                linear-gradient(-45deg,#252940 25%,transparent 25%),
+                linear-gradient(45deg,transparent 75%,#252940 75%),
+                linear-gradient(-45deg,transparent 75%,#252940 75%);
+            background-size:20px 20px;background-position:0 0,0 10px,10px -10px,-10px 0;
+            opacity:0.5
+        }
+        .demo-label{position:absolute;top:12px;padding:4px 10px;border-radius:6px;
+            font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;letter-spacing:0.05em}
+        .demo-label.before{left:12px;background:rgba(13,15,28,0.8);color:var(--text-sec)}
+        .demo-label.after{right:12px;background:rgba(0,217,192,0.2);color:var(--teal)}
+        .demo-subject{position:relative;z-index:2;width:60%;height:60%;border-radius:50%;
+            background:linear-gradient(135deg,var(--magenta) 0%,var(--amber) 100%);
+            display:flex;align-items:center;justify-content:center;font-size:48px;
+            transition:all 0.6s cubic-bezier(0.4,0,0.2,1)}
+        .demo-frame:hover .demo-subject{box-shadow:0 0 40px rgba(0,217,192,0.4)}
+        .demo-caption{text-align:center;margin-top:16px;font-size:13px;color:var(--text-sec)}
+
+        /* SECTION GENERIC */
+        section.block{padding:60px 0;border-top:1px solid rgba(255,255,255,0.05)}
+        .block-title{font-size:clamp(24px,5vw,36px);font-weight:700;margin-bottom:16px;text-align:center}
+        .block-sub{text-align:center;color:var(--text-sec);max-width:440px;margin:0 auto 48px;
+            font-size:clamp(15px,2vw,17px)}
+
+        /* PROBLEM */
+        .problem-grid{display:grid;gap:20px}
+        @media(min-width:640px){.problem-grid{grid-template-columns:repeat(3,1fr)}}
+        .problem-card{background:var(--slate);padding:28px 24px;border-radius:var(--radius-card);
+            border:1px solid var(--slate-hover);text-align:center;transition:all 0.2s}
+        .problem-card:hover{border-color:rgba(255,61,127,0.3);transform:translateY(-4px)}
+        .problem-icon{font-size:32px;margin-bottom:12px}
+        .problem-card h3{font-size:16px;margin-bottom:8px;font-family:'Inter',sans-serif;font-weight:600}
+        .problem-card p{font-size:14px;color:var(--text-sec);line-height:1.5}
+
+        /* SOLUTION 3-STEP */
+        .steps{display:flex;flex-direction:column;gap:32px}
+        @media(min-width:640px){.steps{flex-direction:row;align-items:stretch}}
+        .step{flex:1;text-align:center;position:relative}
+        .step-num{width:40px;height:40px;border-radius:50%;background:var(--teal);
+            color:var(--navy);display:flex;align-items:center;justify-content:center;
+            font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:18px;margin:0 auto 16px}
+        .step h3{font-size:17px;margin-bottom:8px}
+        .step p{font-size:14px;color:var(--text-sec)}
+        @media(min-width:640px){.step:not(:last-child)::after{content:'→';position:absolute;
+            right:-20px;top:0;font-size:24px;color:var(--teal);opacity:0.5}}
+
+        /* USE CASES */
+        .usecase{display:flex;align-items:center;gap:24px;background:var(--slate);
+            padding:24px;border-radius:var(--radius-card);margin-bottom:16px;
+            border:1px solid var(--slate-hover);transition:all 0.2s}
+        .usecase:hover{border-color:rgba(0,217,192,0.3);transform:translateX(4px)}
+        .usecase-emoji{font-size:36px;flex-shrink:0;width:56px;text-align:center}
+        .usecase h3{font-size:17px;margin-bottom:4px;font-family:'Inter',sans-serif;font-weight:600}
+        .usecase p{font-size:14px;color:var(--text-sec)}
+
+        /* TRUST */
+        .trust{text-align:center}
+        .trust-grid{display:flex;flex-wrap:wrap;justify-content:center;gap:16px;margin-top:32px}
+        .trust-item{display:flex;align-items:center;gap:8px;background:var(--slate);
+            padding:12px 20px;border-radius:100px;border:1px solid var(--slate-hover)}
+        .trust-item span{font-size:14px;font-weight:600}
+
+        /* PRICING */
+        .pricing-grid{display:grid;gap:20px}
+        @media(min-width:640px){.pricing-grid{grid-template-columns:1fr 1fr}}
+        .price-card{background:var(--slate);padding:32px 28px;border-radius:var(--radius-card);
+            border:1px solid var(--slate-hover);text-align:center}
+        .price-card.featured{border-color:var(--teal);position:relative;
+            box-shadow:0 0 40px rgba(0,217,192,0.1)}
+        .price-card.featured::before{content:'Most Popular';position:absolute;top:-12px;left:50%;
+            transform:translateX(-50%);background:var(--teal);color:var(--navy);
+            padding:4px 16px;border-radius:100px;font-size:12px;font-weight:700}
+        .price-tier{font-size:14px;text-transform:uppercase;letter-spacing:0.1em;
+            color:var(--text-sec);margin-bottom:8px}
+        .price-amount{font-family:'Space Grotesk',sans-serif;font-size:42px;font-weight:700;
+            margin-bottom:4px}
+        .price-period{font-size:14px;color:var(--text-sec);margin-bottom:24px}
+        .price-features{text-align:left;list-style:none;margin-bottom:28px}
+        .price-features li{padding:6px 0;font-size:14px;color:var(--text);
+            display:flex;align-items:center;gap:8px}
+        .price-features li::before{content:'✓';color:var(--lime);font-weight:700}
+
+        /* FOOTER */
+        footer{padding:48px 0 32px;border-top:1px solid rgba(255,255,255,0.05);text-align:center}
+        .footer-brand{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:20px;
+            color:var(--teal);margin-bottom:8px}
+        .footer-links{display:flex;gap:24px;justify-content:center;margin:20px 0}
+        .footer-links a{color:var(--text-sec);text-decoration:none;font-size:14px;
+            transition:color 0.2s}
+        .footer-links a:hover{color:var(--teal)}
+        .footer-copy{font-size:12px;color:var(--text-sec);opacity:0.6}
+
+        /* SPARK DECORATION */
+        .spark{position:absolute;font-size:20px;animation:sparkle 3s infinite;opacity:0;
+            pointer-events:none}
+        @keyframes sparkle{0%,100%{opacity:0;transform:scale(0.5)}50%{opacity:1;transform:scale(1)}}
+
+        /* FADE IN ON SCROLL */
+        .fade-in{opacity:0;transform:translateY(20px);transition:all 0.6s ease}
+        .fade-in.visible{opacity:1;transform:translateY(0)}
+    </style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+    <div class="container">
+        <div class="badge">100% On-Device AI &middot; No Watermark</div>
+        <h1>Remove any background.<br><span class="accent">Erase any object.</span><br>In one tap.</h1>
+        <p class="sub">CLIPFORGE runs AI directly on your phone. No upload, no server, no watermark. Background removal in under a second.</p>
+        <div class="cta-group">
+            <a href="#" class="btn btn-primary">Get it free</a>
+            <a href="#how" class="btn btn-secondary">See how it works</a>
+        </div>
+
+        <!-- DEMO VISUAL -->
+        <div class="demo">
+            <div class="demo-frame">
+                <div class="demo-img">
+                    <div class="checkered"></div>
+                    <div class="demo-label before">BEFORE</div>
+                    <div class="demo-label after">AFTER</div>
+                    <div class="demo-subject">📸</div>
+                </div>
+            </div>
+            <p class="demo-caption">One tap. Background gone. Hair, fur, fine edges — all perfect.</p>
+        </div>
+    </div>
+</div>
+
+<!-- PROBLEM -->
+<section class="block" id="problem">
+    <div class="container">
+        <h2 class="block-title">Other tools make it painful</h2>
+        <p class="block-sub">Every background remover has a catch. Here's what you're dealing with today.</p>
+        <div class="problem-grid">
+            <div class="problem-card fade-in">
+                <div class="problem-icon">🐌</div>
+                <h3>Slow & Web-Only</h3>
+                <p>Upload, wait 5-10 seconds, download. Every single time. Photoshop takes minutes.</p>
+            </div>
+            <div class="problem-card fade-in">
+                <div class="problem-icon">💧</div>
+                <h3>Watermarks Everywhere</h3>
+                <p>Free tier stamps a logo on your photo. You pay to remove it. Every. Single. Time.</p>
+            </div>
+            <div class="problem-card fade-in">
+                <div class="problem-icon">🔓</div>
+                <h3>Your Photos Upload</h3>
+                <p>Servers in unknown locations process your personal photos. You signed away privacy.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- SOLUTION / HOW IT WORKS -->
+<section class="block" id="how">
+    <div class="container">
+        <h2 class="block-title">Three taps. Done.</h2>
+        <p class="block-sub">No tutorials needed. No learning curve. Open, tap, export.</p>
+        <div class="steps">
+            <div class="step fade-in">
+                <div class="step-num">1</div>
+                <h3>Pick a photo</h3>
+                <p>Open any image from your library. Or take a new one.</p>
+            </div>
+            <div class="step fade-in">
+                <div class="step-num">2</div>
+                <h3>Tap or brush</h3>
+                <p>One tap removes the background. Brush over any object to erase it.</p>
+            </div>
+            <div class="step fade-in">
+                <div class="step-num">3</div>
+                <h3>Export & share</h3>
+                <p>Save as transparent PNG, swap backgrounds, or share directly. No watermark.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- USE CASES -->
+<section class="block" id="usecases">
+    <div class="container">
+        <h2 class="block-title">Made for real life</h2>
+        <p class="block-sub">Whether you're selling, creating, or just fixing a photo — CLIPFORGE handles it.</p>
+
+        <div class="usecase fade-in">
+            <div class="usecase-emoji">📦</div>
+            <div>
+                <h3>Sell products online</h3>
+                <p>Clean product cutouts for Amazon, eBay, Shopify, and Etsy in seconds. Professional studio look without a studio.</p>
+            </div>
+        </div>
+
+        <div class="usecase fade-in">
+            <div class="usecase-emoji">🌅</div>
+            <div>
+                <h3>Fix your memories</h3>
+                <p>That photobomber in your sunset photo? The ex in the family picture? Brush over them. Gone. Like they were never there.</p>
+            </div>
+        </div>
+
+        <div class="usecase fade-in">
+            <div class="usecase-emoji">🎨</div>
+            <div>
+                <h3>Create & design</h3>
+                <p>Transparent PNGs for presentations, social media, thumbnails, and design work. No desktop software needed.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- TRUST -->
+<section class="block trust">
+    <div class="container">
+        <h2 class="block-title">Your photos stay yours</h2>
+        <p class="block-sub">No servers. No tracking. No catch.</p>
+        <div class="trust-grid">
+            <div class="trust-item">🔒 <span>Photos never leave your phone</span></div>
+            <div class="trust-item">✈️ <span>Works fully offline</span></div>
+            <div class="trust-item">🚫 <span>No watermark, ever</span></div>
+            <div class="trust-item">🆓 <span>No signup required</span></div>
+            <div class="trust-item">⚡ <span>&lt;1 second processing</span></div>
+        </div>
+    </div>
+</section>
+
+<!-- PRICING -->
+<section class="block" id="pricing">
+    <div class="container">
+        <h2 class="block-title">Free to start. Pro when you need it.</h2>
+        <p class="block-sub">No hidden paywalls. No surprise charges. Use it free, upgrade if you love it.</p>
+        <div class="pricing-grid">
+            <div class="price-card fade-in">
+                <div class="price-tier">Free</div>
+                <div class="price-amount">$0</div>
+                <div class="price-period">forever</div>
+                <ul class="price-features">
+                    <li>5 edits every day</li>
+                    <li>Background removal</li>
+                    <li>Object eraser</li>
+                    <li>All export formats</li>
+                    <li>No watermark</li>
+                    <li>No signup needed</li>
+                </ul>
+                <a href="#" class="btn btn-secondary">Download free</a>
+            </div>
+            <div class="price-card featured fade-in">
+                <div class="price-tier">CLIPFORGE Pro</div>
+                <div class="price-amount">$2.99<span style="font-size:18px;color:var(--text-sec)">/wk</span></div>
+                <div class="price-period">cancel anytime</div>
+                <ul class="price-features">
+                    <li>Unlimited background removals</li>
+                    <li>Unlimited object erasing</li>
+                    <li>All export formats & backgrounds</li>
+                    <li>Priority for new features</li>
+                    <li>No ads, ever</li>
+                    <li>Works offline (always)</li>
+                </ul>
+                <a href="#" class="btn btn-primary">Get Pro</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+    <div class="container">
+        <div class="footer-brand">CLIPFORGE</div>
+        <p style="color:var(--text-sec);font-size:14px;margin-bottom:16px">Remove anything. Keep everything.</p>
+        <div class="footer-links">
+            <a href="#">Privacy Policy</a>
+            <a href="#">Terms</a>
+            <a href="#">Contact</a>
+            <a href="#">Support</a>
+        </div>
+        <p class="footer-copy">&copy; 2026 CLIPFORGE. All rights reserved.</p>
+    </div>
+</footer>
+
+<script>
+    // Fade-in on scroll
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(e => {
+            if (e.isIntersecting) e.target.classList.add('visible');
+        });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+    // Demo hover effect
+    const demoFrame = document.querySelector('.demo-frame');
+    if (demoFrame) {
+        const checkered = document.querySelector('.checkered');
+        demoFrame.addEventListener('mouseenter', () => {
+            if (checkered) checkered.style.opacity = '1';
+        });
+        demoFrame.addEventListener('mouseleave', () => {
+            if (checkered) checkered.style.opacity = '0.5';
+        });
+    }
+</script>
+</body>
+</html>

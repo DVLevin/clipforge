@@ -1,0 +1,41 @@
+{
+  "statuses": {
+    "0": {
+      "key": "FACT-19",
+      "name": "RESEARCH",
+      "agent": "Validator",
+      "status": "done"
+    },
+    "1": {
+      "key": "FACT-20",
+      "name": "SPEC",
+      "agent": "Strategist",
+      "status": "done"
+    },
+    "2": {
+      "key": "FACT-21",
+      "name": "BACKEND",
+      "agent": "Engineer",
+      "status": "done"
+    },
+    "3": {
+      "key": "FACT-22",
+      "name": "STORE_ASSETS",
+      "agent": "Designer",
+      "status": "in_review"
+    },
+    "4": {
+      "key": "FACT-23",
+      "name": "LAUNCH_PLAN",
+      "agent": "Growth",
+      "status": "done"
+    },
+    "5": {
+      "key": "FACT-24",
+      "name": "DEPLOY",
+      "agent": "Engineer",
+      "status": "done"
+    }
+  },
+  "checked": "2026-07-05T04:43:40.502665"
+}

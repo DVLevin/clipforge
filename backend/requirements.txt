@@ -1,0 +1,22 @@
+# CLIPFORGE backend dependencies (pinned to a known-working set)
+# API stack
+fastapi>=0.110,<0.140
+uvicorn[standard]>=0.29
+python-multipart>=0.0.9
+slowapi>=0.1.9
+httpx>=0.27
+
+# Background removal (self-hosted, ONNX)
+rembg[cpu]>=2.0.50
+onnxruntime>=1.17
+Pillow>=10.2
+
+# Object erasure (LaMa inpainting, self-hosted, PyTorch)
+torch>=2.1
+torchvision>=0.16
+# simple-lama-inpainting pins Pillow<10 conservatively; it works with Pillow 10+/11.
+# Install it with: pip install --no-deps simple-lama-inpainting==0.1.2
+simple-lama-inpainting==0.1.2
+opencv-python-headless>=4.8
+huggingface_hub>=0.20
+requests>=2.31

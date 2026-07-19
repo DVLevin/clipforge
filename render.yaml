@@ -1,0 +1,21 @@
+# Render.com deployment config — zero-config deploy
+# After pushing this repo to GitHub, go to:
+#   https://render.com → New → Blueprint
+#   Connect your GitHub repo → Render reads this file automatically
+
+services:
+  - type: web
+    name: clipforge
+    runtime: docker
+    plan: free
+    dockerfilePath: ./deploy/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: FREE_DAILY_LIMIT
+        value: 5
+      - key: CLIPFORGE_ADMIN_KEY
+        generateValue: true
+      - key: RATE_LIMIT_PER_MINUTE
+        value: 20
